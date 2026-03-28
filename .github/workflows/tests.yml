@@ -20,3 +20,16 @@ jobs:
       run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
     - name: Execute tests (Unit and Feature tests) via PHPUnit/Pest
       run: ./vendor/bin/pest
+
+  packagist-update:
+    name: Notify Packagist
+    runs-on: ubuntu-latest
+    needs: laravel-tests
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+    - name: Update Packagist
+      run: |
+        curl -XPOST -H'content-type:application/json' \
+          'https://packagist.org/api/update-package?username=teaminfinitylk&apiToken=${{ secrets.PACKAGIST_TOKEN }}' \
+          -d'{"repository":{"url":"https://github.com/teaminfinitylk/laravel-hestiacp-sdk"}}'
+
