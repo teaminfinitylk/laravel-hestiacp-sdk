@@ -1,0 +1,54 @@
+{
+    "name": "teaminfinitylk/laravel-hestiacp-sdk",
+    "description": "A modern, Laravel SDK for the HestiaCP Control Panel API",
+    "type": "library",
+    "license": "MIT",
+    "keywords": ["hestiacp", "hosting", "sdk", "api", "teaminfinitylk"],
+    "authors": [
+        {
+            "name": "TeamInfinity PVT LTD",
+            "homepage": "https://teaminfinity.lk"
+        }
+    ],
+    "require": {
+        "php": "^8.2"
+    },
+    "require-dev": {
+        "pestphp/pest": "^3.0",
+        "laravel/framework": "^12.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "TeamInfinityLK\\HestiaCP\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "TeamInfinityLK\\HestiaCP\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "TeamInfinityLK\\HestiaCP\\Laravel\\HestiaServiceProvider"
+            ],
+            "aliases": {
+                "Hestia": "TeamInfinityLK\\HestiaCP\\Laravel\\Facades\\Hestia"
+            }
+        },
+        "teaminfinitylk": {
+            "type": "server-provider",
+            "name": "HestiaCP",
+            "version": "1.0.0"
+        }
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

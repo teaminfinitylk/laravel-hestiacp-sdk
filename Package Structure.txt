@@ -1,0 +1,47 @@
+laravel-hestiacp-sdk
+/
+├── src/
+│   ├── HestiaClient.php                  ← Main entry point
+│   ├── Http/
+│   │   ├── Connector.php                 ← Raw cURL transport
+│   │   └── Response.php                  ← Typed response wrapper
+│   ├── Auth/
+│   │   ├── ApiKeyAuth.php                ← Hash-based auth (modern)
+│   │   └── CredentialAuth.php            ← Username/password auth (legacy)
+│   ├── Contracts/
+│   │   ├── AuthInterface.php
+│   │   └── ResourceInterface.php
+│   ├── Exceptions/
+│   │   ├── HestiaException.php
+│   │   ├── AuthenticationException.php
+│   │   ├── ConnectionException.php
+│   │   └── ApiException.php
+│   ├── Resources/
+│   │   ├── UserResource.php
+│   │   ├── WebResource.php
+│   │   ├── MailResource.php
+│   │   ├── DatabaseResource.php
+│   │   ├── DnsResource.php
+│   │   ├── CronResource.php
+│   │   ├── BackupResource.php
+│   │   ├── PackageResource.php
+│   │   ├── IpResource.php
+│   │   └── FirewallResource.php
+│   ├── DTOs/
+│   │   ├── UserDto.php
+│   │   ├── WebDomainDto.php
+│   │   ├── MailDomainDto.php
+│   │   ├── DatabaseDto.php
+│   │   └── DnsRecordDto.php
+│   └── Laravel/
+│       ├── HestiaServiceProvider.php
+│       └── Facades/
+│           └── Hestia.php
+├── tests/
+│   ├── Unit/
+│   │   ├── ConnectorTest.php
+│   │   └── ResponseTest.php
+│   └── Feature/
+│       └── UserResourceTest.php
+├── composer.json
+└── README.md
