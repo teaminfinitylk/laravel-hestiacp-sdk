@@ -8,7 +8,9 @@ composer.lock
 # PHPUnit / Pest
 /.phpunit.cache/
 .phpunit.result.cache
+.phpunit.cache
 coverage/
+
 
 # Environment
 .env
