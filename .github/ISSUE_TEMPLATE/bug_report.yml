@@ -1,0 +1,75 @@
+name: 🐛 Bug Report
+description: Report something that is broken or not working as expected
+labels: ["bug", "triage"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! Please fill in as much detail as possible.
+        **Security vulnerabilities** must be reported privately — see [SECURITY.md](../../SECURITY.md).
+
+  - type: input
+    id: sdk-version
+    attributes:
+      label: SDK Version
+      description: Run `composer show teaminfinitylk/laravel-hestiacp-sdk`
+      placeholder: "e.g. 1.0.0"
+    validations:
+      required: true
+
+  - type: input
+    id: php-version
+    attributes:
+      label: PHP Version
+      description: Run `php -v`
+      placeholder: "e.g. 8.2.10"
+    validations:
+      required: true
+
+  - type: input
+    id: hestia-version
+    attributes:
+      label: HestiaCP Version
+      description: Shown in your panel footer
+      placeholder: "e.g. 1.8.12"
+    validations:
+      required: false
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear description of what the bug is.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Minimal code that reproduces the problem
+      render: php
+      placeholder: |
+        $client = HestiaClient::connect('...', '...');
+        $result = $client->users()->list();
+        // Expected: array of UserDto
+        // Actual: empty array
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happened? Paste the error/output.
+    validations:
+      required: true

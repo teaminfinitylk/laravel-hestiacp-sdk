@@ -1,0 +1,49 @@
+name: ✨ Feature Request
+description: Suggest a new resource method, command wrapper, or improvement
+labels: ["enhancement"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting an improvement! The more detail you provide, the faster we can implement it.
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Feature Summary
+      description: What do you want to add or change?
+      placeholder: "Add support for v-list-sys-services to expose system service status"
+    validations:
+      required: true
+
+  - type: textarea
+    id: hestia-commands
+    attributes:
+      label: Related HestiaCP CLI Command(s)
+      description: Which `v-*` CLI commands should this wrap? Find them at https://hestiacp.com/docs/reference/api.html
+      placeholder: |
+        v-list-sys-services
+        v-restart-service
+    validations:
+      required: false
+
+  - type: textarea
+    id: api-design
+    attributes:
+      label: Suggested API Design
+      description: How would you expect to call this in PHP?
+      render: php
+      placeholder: |
+        $services = $client->system()->listServices();
+        $client->system()->restart('nginx');
+    validations:
+      required: false
+
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use Case
+      description: Why do you need this? How does it help with billing automation or HestiaCP management?
+    validations:
+      required: true
