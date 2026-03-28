@@ -4,6 +4,7 @@ A modern, fully-typed Laravel SDK for the [HestiaCP](https://hestiacp.com) Contr
 
 [![PHP ^8.2](https://img.shields.io/badge/PHP-^8.2-blue)](https://www.php.net)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green)](LICENSE)
+[![Laravel](https://github.com/teaminfinitylk/laravel-hestiacp-sdk/actions/workflows/tests.yml/badge.svg)](https://github.com/teaminfinitylk/laravel-hestiacp-sdk/actions/workflows/tests.yml)
 
 ---
 
