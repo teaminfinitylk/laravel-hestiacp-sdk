@@ -4,68 +4,144 @@ declare(strict_types=1);
 
 namespace TeamInfinityLK\HestiaCP\Resources;
 
-use TeamInfinityLK\HestiaCP\Contracts\ResourceInterface;
 use TeamInfinityLK\HestiaCP\DTOs\WebDomainDto;
 use TeamInfinityLK\HestiaCP\Http\Connector;
 use TeamInfinityLK\HestiaCP\Exceptions\ApiException;
 
-class WebResource implements ResourceInterface
+class WebResource
 {
     public function __construct(
         private readonly Connector $connector
     ) {}
 
-    public function list(): array
+    /**
+     * v-list-web-domains USER [FORMAT]
+     * List all web domains for a specific user
+     */
+    public function list(string $username = 'admin'): array
     {
-        $response = $this->connector->get('/api/v1/list/web/');
+        $response = $this->connector->execute('v-list-web-domains', [$username, 'json'], false);
 
-        if (!$response->isSuccessful()) {
-            throw new ApiException('Failed to list web domains: ' . $response->get('error', 'Unknown error'));
+        if ($response->isError()) {
+            throw new ApiException(
+                'Failed to list web domains: ' . $response->getErrorName(),
+                $response->hestiaCode
+            );
         }
 
-        return array_map(
-            fn(array $data) => WebDomainDto::fromArray($data),
-            $response->get('data', [])
-        );
+        $domains = [];
+        foreach ($response->all() as $domain => $data) {
+            if (!is_array($data)) continue;
+            $domains[] = WebDomainDto::fromArray(array_merge($data, [
+                'DOMAIN'        => $domain,
+                'PARENT_DOMAIN' => $domain,
+            ]));
+        }
+
+        return $domains;
     }
 
-    public function get(string $id): ?array
+    /**
+     * List all domains across ALL users
+     * Loops v-list-web-domains per user
+     */
+    public function listAll(array $usernames): array
     {
-        $response = $this->connector->get('/api/v1/list/web/' . $id);
+        $all = [];
+        foreach ($usernames as $username) {
+            try {
+                $domains = $this->list($username);
+                foreach ($domains as $domain) {
+                    $all[] = $domain;
+                }
+            } catch (\Exception) {
+                continue;
+            }
+        }
+        return $all;
+    }
 
-        if (!$response->isSuccessful()) {
+    /**
+     * v-list-web-domain USER DOMAIN [FORMAT]
+     */
+    public function get(string $username, string $domain): ?array
+    {
+        $response = $this->connector->execute('v-list-web-domain', [$username, $domain, 'json'], false);
+
+        if ($response->isError()) {
             return null;
         }
 
-        return $response->get('data', [])[0] ?? null;
+        $data = $response->all();
+        return $data[$domain] ?? (array_values($data)[0] ?? null);
     }
 
+    /**
+     * v-add-web-domain USER DOMAIN [IP] [RESTART] [ALIASES] [PROXY_EXTENSIONS]
+     */
     public function create(array $data): array
     {
-        $response = $this->connector->post('/api/v1/add/web/', $data);
+        $response = $this->connector->execute('v-add-web-domain', [
+            $data['user'],
+            $data['domain'],
+            $data['ip']      ?? '',
+            $data['restart'] ?? 'yes',
+            $data['aliases'] ?? '',
+        ]);
 
-        if (!$response->isSuccessful()) {
-            throw new ApiException('Failed to create web domain: ' . $response->get('error', 'Unknown error'));
+        if ($response->isError()) {
+            throw new ApiException(
+                'Failed to create web domain: ' . $response->getErrorName(),
+                $response->hestiaCode
+            );
         }
 
         return $response->all();
     }
 
-    public function update(string $id, array $data): array
+    /**
+     * v-delete-web-domain USER DOMAIN [RESTART]
+     */
+    public function delete(string $username, string $domain, bool $restart = true): bool
     {
-        $response = $this->connector->post('/api/v1/edit/web/' . $id, $data);
+        $response = $this->connector->execute('v-delete-web-domain', [
+            $username,
+            $domain,
+            $restart ? 'yes' : 'no',
+        ]);
 
-        if (!$response->isSuccessful()) {
-            throw new ApiException('Failed to update web domain: ' . $response->get('error', 'Unknown error'));
-        }
-
-        return $response->all();
+        return $response->isSuccessful();
     }
 
-    public function delete(string $id): bool
+    /**
+     * v-add-letsencrypt-domain USER DOMAIN [ALIASES] [MAIL]
+     */
+    public function addSsl(string $username, string $domain, string $aliases = ''): bool
     {
-        $response = $this->connector->post('/api/v1/delete/web/', ['domain' => $id]);
+        $response = $this->connector->execute('v-add-letsencrypt-domain', [
+            $username,
+            $domain,
+            $aliases,
+        ]);
 
+        return $response->isSuccessful();
+    }
+
+    /**
+     * v-suspend-web-domain USER DOMAIN [RESTART]
+     */
+    public function suspend(string $username, string $domain): bool
+    {
+        $response = $this->connector->execute('v-suspend-web-domain', [$username, $domain, 'yes']);
+        return $response->isSuccessful();
+    }
+
+    /**
+     * v-unsuspend-web-domain USER DOMAIN [RESTART]
+     */
+    public function unsuspend(string $username, string $domain): bool
+    {
+        $response = $this->connector->execute('v-unsuspend-web-domain', [$username, $domain, 'yes']);
         return $response->isSuccessful();
     }
 }

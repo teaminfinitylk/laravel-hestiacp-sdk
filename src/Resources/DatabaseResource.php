@@ -4,68 +4,136 @@ declare(strict_types=1);
 
 namespace TeamInfinityLK\HestiaCP\Resources;
 
-use TeamInfinityLK\HestiaCP\Contracts\ResourceInterface;
 use TeamInfinityLK\HestiaCP\DTOs\DatabaseDto;
 use TeamInfinityLK\HestiaCP\Http\Connector;
 use TeamInfinityLK\HestiaCP\Exceptions\ApiException;
 
-class DatabaseResource implements ResourceInterface
+/**
+ * Database management via HestiaCP API.
+ *
+ * All operations POST to /api/index.php using the v-* CLI commands.
+ * Note: HestiaCP prepends the username to the database/dbuser names
+ *       (e.g. user "john" + db "mydb" → stored as "john_mydb").
+ */
+class DatabaseResource
 {
     public function __construct(
         private readonly Connector $connector
     ) {}
 
-    public function list(): array
+    /**
+     * v-list-databases USER [FORMAT]
+     * List all databases for a user.
+     *
+     * @return DatabaseDto[]
+     */
+    public function list(string $username): array
     {
-        $response = $this->connector->get('/api/v1/list/db/');
+        $response = $this->connector->execute('v-list-databases', [$username, 'json'], false);
 
-        if (!$response->isSuccessful()) {
-            throw new ApiException('Failed to list databases: ' . $response->get('error', 'Unknown error'));
+        if ($response->isError()) {
+            throw new ApiException(
+                'Failed to list databases: ' . $response->getErrorName(),
+                $response->hestiaCode
+            );
         }
 
-        return array_map(
-            fn(array $data) => DatabaseDto::fromArray($data),
-            $response->get('data', [])
-        );
+        $databases = [];
+        foreach ($response->all() as $dbName => $data) {
+            if (!is_array($data)) {
+                continue;
+            }
+            $databases[] = DatabaseDto::fromArray(array_merge($data, ['DATABASE' => $dbName]));
+        }
+
+        return $databases;
     }
 
-    public function get(string $id): ?array
+    /**
+     * v-list-database USER DATABASE [FORMAT]
+     * Get details of a single database.
+     */
+    public function get(string $username, string $database): ?array
     {
-        $response = $this->connector->get('/api/v1/list/db/' . $id);
+        $response = $this->connector->execute('v-list-database', [$username, $database, 'json'], false);
 
-        if (!$response->isSuccessful()) {
+        if ($response->isError()) {
             return null;
         }
 
-        return $response->get('data', [])[0] ?? null;
+        $data = $response->all();
+        return $data[$database] ?? (array_values($data)[0] ?? null);
     }
 
-    public function create(array $data): array
+    /**
+     * v-add-database USER DATABASE DBUSER DBPASS [TYPE] [HOST] [CHARSET]
+     * Create a new database.
+     *
+     * $data keys: user, database, dbuser, dbpass, type, host, charset
+     *
+     * Note: HestiaCP will prepend $data['user'].'_' to database and dbuser names.
+     */
+    public function create(array $data): bool
     {
-        $response = $this->connector->post('/api/v1/add/db/', $data);
+        $response = $this->connector->execute('v-add-database', [
+            $data['user'],
+            $data['database'],
+            $data['dbuser'],
+            $data['dbpass'],
+            $data['type']    ?? 'mysql',
+            $data['host']    ?? 'localhost',
+            $data['charset'] ?? 'utf8mb4',
+        ]);
 
-        if (!$response->isSuccessful()) {
-            throw new ApiException('Failed to create database: ' . $response->get('error', 'Unknown error'));
+        if ($response->isError()) {
+            throw new ApiException(
+                'Failed to create database: ' . $response->getErrorName(),
+                $response->hestiaCode
+            );
         }
 
-        return $response->all();
+        return true;
     }
 
-    public function update(string $id, array $data): array
+    /**
+     * v-change-database-password USER DATABASE DBUSER PASSWORD
+     * Change the password for a database user.
+     */
+    public function changePassword(string $username, string $database, string $dbuser, string $password): bool
     {
-        $response = $this->connector->post('/api/v1/edit/db/' . $id, $data);
-
-        if (!$response->isSuccessful()) {
-            throw new ApiException('Failed to update database: ' . $response->get('error', 'Unknown error'));
-        }
-
-        return $response->all();
+        $response = $this->connector->execute('v-change-database-password', [
+            $username,
+            $database,
+            $dbuser,
+            $password,
+        ]);
+        return $response->isSuccessful();
     }
 
-    public function delete(string $id): bool
+    /**
+     * v-suspend-database USER DATABASE
+     */
+    public function suspend(string $username, string $database): bool
     {
-        $response = $this->connector->post('/api/v1/delete/db/', ['database' => $id]);
+        $response = $this->connector->execute('v-suspend-database', [$username, $database]);
+        return $response->isSuccessful();
+    }
 
+    /**
+     * v-unsuspend-database USER DATABASE
+     */
+    public function unsuspend(string $username, string $database): bool
+    {
+        $response = $this->connector->execute('v-unsuspend-database', [$username, $database]);
+        return $response->isSuccessful();
+    }
+
+    /**
+     * v-delete-database USER DATABASE
+     */
+    public function delete(string $username, string $database): bool
+    {
+        $response = $this->connector->execute('v-delete-database', [$username, $database]);
         return $response->isSuccessful();
     }
 }

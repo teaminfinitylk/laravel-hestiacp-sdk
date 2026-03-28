@@ -4,75 +4,107 @@ declare(strict_types=1);
 
 namespace TeamInfinityLK\HestiaCP\Resources;
 
-use TeamInfinityLK\HestiaCP\Contracts\ResourceInterface;
 use TeamInfinityLK\HestiaCP\Http\Connector;
 use TeamInfinityLK\HestiaCP\Exceptions\ApiException;
 
-class BackupResource implements ResourceInterface
+/**
+ * Backup management via HestiaCP API.
+ *
+ * All operations POST to /api/index.php using the v-* CLI commands.
+ */
+class BackupResource
 {
     public function __construct(
         private readonly Connector $connector
     ) {}
 
-    public function list(): array
+    /**
+     * v-list-user-backups USER [FORMAT]
+     * List all backups for a user.
+     */
+    public function list(string $username): array
     {
-        $response = $this->connector->get('/api/v1/list/backup/');
+        $response = $this->connector->execute('v-list-user-backups', [$username, 'json'], false);
 
-        if (!$response->isSuccessful()) {
-            throw new ApiException('Failed to list backups: ' . $response->get('error', 'Unknown error'));
+        if ($response->isError()) {
+            throw new ApiException(
+                'Failed to list backups: ' . $response->getErrorName(),
+                $response->hestiaCode
+            );
         }
 
-        return $response->get('data', []);
+        return $response->all();
     }
 
-    public function get(string $id): ?array
+    /**
+     * v-list-user-backup USER BACKUP [FORMAT]
+     * Get details of a specific backup file.
+     */
+    public function get(string $username, string $backup): ?array
     {
-        $response = $this->connector->get('/api/v1/list/backup/' . $id);
+        $response = $this->connector->execute('v-list-user-backup', [$username, $backup, 'json'], false);
 
-        if (!$response->isSuccessful()) {
+        if ($response->isError()) {
             return null;
         }
 
-        return $response->get('data', [])[0] ?? null;
+        $data = $response->all();
+        return $data[$backup] ?? (array_values($data)[0] ?? null);
     }
 
-    public function create(array $data): array
+    /**
+     * v-backup-user USER
+     * Create a new backup for a user.
+     */
+    public function create(string $username): bool
     {
-        $response = $this->connector->post('/api/v1/add/backup/', $data);
+        $response = $this->connector->execute('v-backup-user', [$username]);
 
-        if (!$response->isSuccessful()) {
-            throw new ApiException('Failed to create backup: ' . $response->get('error', 'Unknown error'));
+        if ($response->isError()) {
+            throw new ApiException(
+                'Failed to create backup: ' . $response->getErrorName(),
+                $response->hestiaCode
+            );
         }
 
-        return $response->all();
+        return true;
     }
 
-    public function update(string $id, array $data): array
+    /**
+     * v-restore-user USER BACKUP [WEB] [DNS] [MAIL] [DB] [CRON] [UDIR] [NOTIFY]
+     * Restore a backup for a user.
+     *
+     * $options keys: web, dns, mail, db, cron, udir — default 'yes' to restore all
+     */
+    public function restore(string $username, string $backup, array $options = []): bool
     {
-        $response = $this->connector->post('/api/v1/edit/backup/' . $id, $data);
+        $response = $this->connector->execute('v-restore-user', [
+            $username,
+            $backup,
+            $options['web']   ?? 'yes',
+            $options['dns']   ?? 'yes',
+            $options['mail']  ?? 'yes',
+            $options['db']    ?? 'yes',
+            $options['cron']  ?? 'yes',
+            $options['udir']  ?? 'yes',
+        ]);
 
-        if (!$response->isSuccessful()) {
-            throw new ApiException('Failed to update backup: ' . $response->get('error', 'Unknown error'));
+        if ($response->isError()) {
+            throw new ApiException(
+                'Failed to restore backup: ' . $response->getErrorName(),
+                $response->hestiaCode
+            );
         }
 
-        return $response->all();
+        return true;
     }
 
-    public function delete(string $id): bool
+    /**
+     * v-delete-user-backup USER BACKUP
+     */
+    public function delete(string $username, string $backup): bool
     {
-        $response = $this->connector->post('/api/v1/delete/backup/', ['backup' => $id]);
-
+        $response = $this->connector->execute('v-delete-user-backup', [$username, $backup]);
         return $response->isSuccessful();
-    }
-
-    public function restore(string $backup): array
-    {
-        $response = $this->connector->post('/api/v1/restore/backup/', ['backup' => $backup]);
-
-        if (!$response->isSuccessful()) {
-            throw new ApiException('Failed to restore backup: ' . $response->get('error', 'Unknown error'));
-        }
-
-        return $response->all();
     }
 }

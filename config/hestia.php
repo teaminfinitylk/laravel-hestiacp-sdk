@@ -41,4 +41,6 @@ return [
     |
     */
     'timeout' => env('HESTIA_TIMEOUT', 30),
+
+    'verify_ssl' => env('HESTIA_VERIFY_SSL', true),
 ];
